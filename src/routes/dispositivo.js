@@ -20,7 +20,7 @@ root.get('/getListaDeDispositivos', (_req, res) => {
 
 root.get('/getHistorial/:idDisp', (req, res) => {
     const { idDisp } = req.params;
-    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ?', [idDisp], (err, rows) => {
+    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ?', [idDisp], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 res.status(200).send(rows);
@@ -38,11 +38,11 @@ root.get('/getHistorialPorDia/:idDisp', (req, res) => {
     const listaHistorial = [];
     const fechaInicial = fecha() + " 00:00:00.000";
     const fechaActual = fecha() + " 23:59:59.999";
-    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
+    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 for (const historialActual of rows) {
-                    const {Tiempo, ...histoNuevo } = historialActual;
+                    const { Tiempo, ...histoNuevo } = historialActual;
                     listaHistorial.push(histoNuevo);
                 }
                 res.status(200).send(listaHistorial);
@@ -60,11 +60,11 @@ root.get('/getHistorialPorSemana/:idDisp', (req, res) => {
     const listaHistorial = [];
     const fechaInicial = getInicioDeSemana() + " 00:00:00.000";
     const fechaActual = fecha() + " 23:59:59.999";
-    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
+    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 for (const historialActual of rows) {
-                    const {Tiempo, ...histoNuevo } = historialActual;
+                    const { Tiempo, ...histoNuevo } = historialActual;
                     listaHistorial.push(histoNuevo);
                 }
                 res.status(200).send(listaHistorial);
@@ -82,11 +82,11 @@ root.get('/getHistorialPorMes/:idDisp', (req, res) => {
     const listaHistorial = [];
     const fechaInicial = getInicioDeMes() + " 00:00:00.000";
     const fechaActual = fecha() + " 23:59:59.999";
-    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
+    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 for (const historialActual of rows) {
-                    const {Tiempo, ...histoNuevo } = historialActual;
+                    const { Tiempo, ...histoNuevo } = historialActual;
                     listaHistorial.push(histoNuevo);
                 }
                 res.status(200).send(listaHistorial);
@@ -144,6 +144,7 @@ root.get('/dispDesconectado/:idDisp', async (req, res) => {
 
 
 function getDispositivosMoviles() {
+    let listaDisp = []
     return new Promise((res, rej) => {
         db.query('SELECT * FROM tokendisp', (err, rows) => {
             if (!err) {

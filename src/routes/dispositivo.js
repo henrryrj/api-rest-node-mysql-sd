@@ -36,10 +36,9 @@ root.get('/getHistorial/:idDisp', (req, res) => {
 root.get('/getHistorialPorDia/:idDisp', (req, res) => {
     const { idDisp } = req.params;
     const listaHistorial = [];
-    let fechaActual = fecha();
-    const fechaFinal = fechaActual + "23:59:59.999";
-    fechaActual = fechaActual + " 00:00:00.000";
-    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaActual, fechaFinal], (err, rows) => {
+    const fechaInicial = fecha() + " 00:00:00.000";
+    const fechaActual = fecha() + " 23:59:59.999";
+    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 for (const historialActual of rows) {
@@ -51,7 +50,7 @@ root.get('/getHistorialPorDia/:idDisp', (req, res) => {
                 res.status(200).send([]);
             }
         } else {
-            res.status(400).send(`Errorcito: ${err}`);
+            res.status(400).send(`Error: ${err}`);
         }
     });
 });
@@ -81,8 +80,8 @@ root.get('/getHistorialPorSemana/:idDisp', (req, res) => {
 root.get('/getHistorialPorMes/:idDisp', (req, res) => {
     const { idDisp } = req.params;
     const listaHistorial = [];
-    const fechaInicial = getInicioDeMes() + " 00:00.000";
-    const fechaActual = fecha() + " 23:59.999";
+    const fechaInicial = getInicioDeMes() + " 00:00:00.000";
+    const fechaActual = fecha() + " 23:59:59.999";
     db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {

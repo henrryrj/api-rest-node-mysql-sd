@@ -3,12 +3,26 @@ const root = express.Router();
 const fetch = (...args) =>
     import("node-fetch").then(({ default: fetch }) => fetch(...args));
 const db = require('../database');
+const { Dispositivo, Monitor } = require('../model/dispositivo_model');
 
-root.get('/getListaDeDispositivos', (_req, res) => {
+
+root.get('/getDispositivos', (_req, res) => {
+    let listDispositivos = [];
     db.query('SELECT * FROM dispositivo', (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
-                res.status(200).send(rows);
+                for (const dispActual of rows) {
+                    let dispo = new Dispositivo({
+                        id: dispActual.id,
+                        temp: dispActual.temp.toString(),
+                        hum: dispActual.hum.toString(),
+                        estado: dispActual.estado,
+                        ultimoRegistro: dispActual.ultimoRegistro
+                    });
+                    dispo.estadoConverter(dispo.estado);
+                    listDispositivos.push(dispo);
+                }
+                res.status(200).send(listDispositivos);
             } else {
                 res.status(200).send([]);
             }
@@ -18,36 +32,17 @@ root.get('/getListaDeDispositivos', (_req, res) => {
     });
 });
 
-root.get('/getHistorial/:idDisp', (req, res) => {
-    const { idDisp } = req.params;
-    let listaHistorial = [];
-    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ?', [idDisp], (err, rows) => {
-        if (!err) {
-            if (rows.length > 0) {
-                for (const historialActual of rows) {
-                    const { Tiempo, ...histoNuevo } = historialActual;
-                    listaHistorial.push(histoNuevo);
-                }
-                res.status(200).send(listaHistorial);
-            } else {
-                res.status(200).send([]);
-            }
-        } else {
-            res.status(400).send(`Error: ${err}`);
-        }
-    });
-});
-
 root.get('/getHistorialPorDia/:idDisp', (req, res) => {
     const { idDisp } = req.params;
     let listaHistorial = [];
     const fechaInicial = fecha() + " 00:00:00.000";
     const fechaActual = fecha() + " 23:59:59.999";
-    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
+    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idDispositivo AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 for (const historialActual of rows) {
-                    const { Tiempo, ...histoNuevo } = historialActual;
+                    let { id,hum,tiempo, ...histoNuevo} = historialActual;
+                    histoNuevo.temp = histoNuevo.temp.toString();
                     listaHistorial.push(histoNuevo);
                 }
                 res.status(200).send(listaHistorial);
@@ -65,11 +60,12 @@ root.get('/getHistorialPorSemana/:idDisp', (req, res) => {
     let listaHistorial = [];
     const fechaInicial = getInicioDeSemana() + " 00:00:00.000";
     const fechaActual = fecha() + " 23:59:59.999";
-    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
+    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idDispositivo AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 for (const historialActual of rows) {
-                    const { Tiempo, ...histoNuevo } = historialActual;
+                    let { id,hum,tiempo, ...histoNuevo} = historialActual;
+                    histoNuevo.temp = histoNuevo.temp.toString();
                     listaHistorial.push(histoNuevo);
                 }
                 res.status(200).send(listaHistorial);
@@ -87,11 +83,12 @@ root.get('/getHistorialPorMes/:idDisp', (req, res) => {
     let listaHistorial = [];
     const fechaInicial = getInicioDeMes() + " 00:00:00.000";
     const fechaActual = fecha() + " 23:59:59.999";
-    db.query('SELECT monitor.*, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idCliente AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
+    db.query('SELECT monitor.* FROM dispositivo, monitor WHERE dispositivo.id = monitor.idDispositivo AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ? ORDER BY monitor.time ASC', [idDisp, fechaInicial, fechaActual], (err, rows) => {
         if (!err) {
             if (rows.length > 0) {
                 for (const historialActual of rows) {
-                    const { Tiempo, ...histoNuevo } = historialActual;
+                    let { id,hum,tiempo, ...histoNuevo} = historialActual;
+                    histoNuevo.temp = histoNuevo.temp.toString();
                     listaHistorial.push(histoNuevo);
                 }
                 res.status(200).send(listaHistorial);
@@ -160,7 +157,6 @@ function getDispositivosMoviles() {
                     res(listaDisp);
                 } else {
                     res([]);
-
                 }
             } else {
                 rej('-1');

@@ -144,6 +144,24 @@ root.get('/dispDesconectado/:idDisp', async (req, res) => {
     res.status(200).send('disconnected!');
 });
 
+root.get('/getNuevoDato/:idDisp', async (req,res)=>{
+    const { idDisp } = req.params;
+    let listaHistorial = [];
+    const fechaInicial = fecha() + " 00:00:00.000";
+    const fechaActual = fecha() + " 23:59:59.999";
+    db.query('SELECT monitor.temp, monitor.time, dispositivo.estado FROM dispositivo, monitor WHERE dispositivo.id = monitor.idDispositivo AND dispositivo.id = ? AND monitor.time BETWEEN ? AND ?  ORDER BY monitor.time DESC;', [idDisp, fechaInicial, fechaActual], (err, rows) => {
+        if (!err) {
+            if (rows.length > 0) {
+                res.status(200).send(rows[0]);
+            } else {
+                res.status(200).send({temp: 0.0,time: '',estado: -1});
+            }
+        } else {
+            res.status(400).send(`Error: ${err}`);
+        }
+    });
+});
+
 
 function getDispositivosMoviles() {
     let listaDisp = []
